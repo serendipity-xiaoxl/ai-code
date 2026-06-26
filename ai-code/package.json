@@ -1,6 +1,6 @@
 {
   "name": "ai-code",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Terminal AI Coding Assistant - powered by LangChain",
   "type": "module",
   "main": "dist/cli/index.js",

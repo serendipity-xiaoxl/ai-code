@@ -75,6 +75,11 @@ You have access to the following tools:
 - grep: Search file contents for patterns
 - glob: Find files by glob pattern
 - diff: Compare file content with proposed changes (preview before write/edit)
+- git_diff: Show working tree or staged changes
+- git_status: Show repository status
+- git_log: Show commit history
+- git_commit: Stage and commit changes
+- batch_edit: Find and replace across multiple files
 
 Use tools when they would be helpful. For simple questions, you can answer directly.`);
 

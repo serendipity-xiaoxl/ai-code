@@ -1,8 +1,8 @@
 # 项目企划书：AI-Coding 终端助手
 
-> 版本：v1.1  
+> 版本：v1.2  
 > 日期：2026-06-26  
-> 状态：Phase 1 完成 / Phase 2 进行中
+> 状态：Phase 1 ✅ / Phase 2 ✅ / Phase 3 ⏳
 
 ---
 
@@ -35,16 +35,21 @@
 | 输入框 UI | ✅ | `src/renderer/input.ts` — ASCII 终端输入渲染 |
 | 文件引用 | ✅ | `src/cli/file-refs.ts` — @file 语法 + 内容注入 |
 | 上下文命令 | ✅ | `src/cli/context-commands.ts` — /status /context /compact |
-| 文件差异对比 | ❌ | Phase 2 待实现 |
-| 批量文件编辑 | ❌ | Phase 2 待实现 |
-| Git 集成 | ❌ | Phase 2 待实现 |
+| 文件差异对比 | ✅ | `src/tools/file/diff.ts` — unified diff 工具 |
+| 批量文件编辑 | ✅ | `src/tools/file/batch-edit.ts` — 正则跨文件替换 + diff 预览 |
+| Git 集成 | ✅ | `src/tools/git/tools.ts` — git_diff/status/log/commit |
+
+### Phase 2 增强 — ✅ 已完成
+
+所有 Phase 2 功能已实现。项目拥有 13 个内置工具。
 
 ### Phase 3 扩展 — ⏳ 未开始
 
 | 功能 | 状态 |
 |------|------|
 | 子代理系统 | ⏳ |
-| MCP 集成 | ⏳ (mcp-code-review-tool 已独立实现) |
+| MCP 集成 | ⏳ |
+| LSP 诊断 | ⏳ |
 | 插件系统 | ⏳ |
 | LSP 诊断 | ⏳ |
 | Checkpointing | ⏳ |

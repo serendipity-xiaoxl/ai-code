@@ -123,6 +123,22 @@ export async function createDefaultRegistry(
   const { createDiffTool } = await import('./file/diff');
   registry.register(createDiffTool(), { requiresApproval: true });
 
+  // Git tools
+  const {
+    createGitDiffTool,
+    createGitStatusTool,
+    createGitLogTool,
+    createGitCommitTool,
+  } = await import('./git/tools');
+  registry.register(createGitDiffTool(), { requiresApproval: false });
+  registry.register(createGitStatusTool(), { requiresApproval: false });
+  registry.register(createGitLogTool(), { requiresApproval: false });
+  registry.register(createGitCommitTool(), { requiresApproval: true });
+
+  // Batch edit tool
+  const { createBatchEditTool } = await import('./file/batch-edit');
+  registry.register(createBatchEditTool(), { requiresApproval: true });
+
   logger.info('Tool registry created with', registry.count, 'tools');
 
   return registry;

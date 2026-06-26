@@ -120,8 +120,10 @@ export function showHelp(): void {
     AIC_LOG_LEVEL             Log level
 
   NODE.JS COMPATIBILITY:
-    Build: npx tsc --project tsconfig.node.json
-    Run:   node dist/node/cli/index.js  (or use npx tsx src/cli/index.ts)
+    Run TS directly:  npx tsx src/cli/index.ts
+    Build JS:         npm run build:node
+    Run JS:           node dist/node/cli/index.js
+    Binary build:     npm run build:binary    (standalone executables)
 
   KEYBINDINGS:
     Ctrl+C    Interrupt / stop

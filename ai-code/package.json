@@ -3,17 +3,26 @@
   "version": "0.1.0",
   "description": "Terminal AI Coding Assistant - powered by LangChain",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/cli/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "aic": "dist/index.js"
+    "aic": "dist/cli/index.js"
+  },
+  "exports": {
+    ".": "./dist/cli/index.js"
   },
   "scripts": {
     "dev": "bun run --watch src/cli/index.ts",
+    "dev:node": "node --watch --import tsx src/cli/index.ts",
     "start": "bun run src/cli/index.ts",
+    "start:node": "node --import tsx src/cli/index.ts",
     "build": "bun run build:ts",
     "build:ts": "bunx tsc",
-    "build:node": "bunx tsc --project tsconfig.node.json",
+    "build:node": "bunx tsc --project tsconfig.node.json && node -e \"require('fs').writeFileSync('dist/node/package.json', JSON.stringify({type:'commonjs'}))\"",
+    "build:binary": "node --import tsx scripts/build-binary.ts",
+    "build:binary:bun": "bun run scripts/build-binary.ts --target bun",
+    "build:binary:node": "node --import tsx scripts/build-binary.ts --target node",
+    "build:binary:all": "node --import tsx scripts/build-binary.ts --target all",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
@@ -33,7 +42,12 @@
     "typescript": "^5.7.0",
     "bun-types": "^1.2.0",
     "@types/node": "^22.0.0",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "tsx": "^4.19.0",
+    "esbuild": "^0.25.0"
+  },
+  "optionalDependencies": {
+    "pkg": "^5.8.0"
   },
   "engines": {
     "bun": ">=1.2.0",

@@ -14,7 +14,7 @@ import {
   ListResourcesRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import type { ReviewConfig, CodeReview, ReportFormat } from '../types';
+import type { ReviewConfig, CodeReview, ReportFormat, ReviewIssue } from '../types';
 import { ReviewChain } from '../agent/review-chain';
 import { FixChain } from '../agent/fix-chain';
 import { AstAnalyzer } from '../analyzer/ast-analyzer';

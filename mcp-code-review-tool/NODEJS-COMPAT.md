@@ -1,46 +1,82 @@
-# Node.js Compatibility Guide
+# Node.js Compatibility & Binary Build Guide
 
-This project is built with **Bun** as the primary runtime and package manager.
-This document describes differences when running with **Node.js**.
+## Quick Start
 
-## Quick Start with Node.js
+### Bun (primary)
+```bash
+bun install
+bun run dev          # Start MCP server with watch mode
+bun run start        # Run compiled output
+```
+
+### Node.js
+```bash
+npm install
+npm run dev:node     # Development with watch mode
+npm run start:node   # Start MCP server
+```
+
+### Run TypeScript directly with Node.js
+```bash
+npx tsx src/index.ts
+npx tsx src/index.ts --help
+npx tsx src/index.ts --standalone
+```
+
+## Build
 
 ```bash
-# Install dependencies (Bun is still recommended for install)
-npm install
+# TypeScript compilation
+npm run build              # Bun build (ESM)
+npm run build:node-compat  # Node.js build (CommonJS)
 
-# Build for Node.js (uses CommonJS module format)
-npx tsc --project tsconfig.node.json
-
-# Run with Node.js
+# Run compiled output
 node dist/node/index.js
 ```
 
-## Build Configuration
+## Binary Build (Standalone Executables)
 
-- `tsconfig.node.json` compiles to CommonJS with `moduleResolution: "node"`
-- Output goes to `dist/node/` to avoid conflicting with the Bun build
-- Run `bun run build:node-compat` or `npx tsc --project tsconfig.node.json` to build
+Build standalone native binaries that don't require Bun or Node.js installed.
 
-## Key Differences (Bun vs Node.js)
+### Prerequisites
+```bash
+npm install             # Install dependencies (esbuild, etc.)
+npm install pkg         # Optional: for Node.js binary builds
+```
+
+### Build commands
+```bash
+npm run build:binary           # Build both Bun and Node.js binaries
+npm run build:binary:bun       # Build with Bun only
+npm run build:binary:node      # Build with Node.js/pkg only
+npm run build:binary:all       # Build both (same as default)
+```
+
+### Output
+Binaries are placed in `./bin/` directory:
+- `mcp-review-bun-{platform}` — Bun standalone binary
+- `mcp-review-node-{platform}` — Node.js standalone binary
+
+### Binary build process
+1. **esbuild** bundles all TypeScript into a single JS file
+2. **Bun**: `bun build --compile` creates a self-contained binary
+3. **Node.js**: `pkg` packages the bundle with a Node.js runtime
+   - Falls back to Node.js SEA (Single Executable Application) if pkg unavailable
+
+## Key Differences
 
 | Feature | Bun | Node.js |
 |---------|-----|---------|
-| Runtime | `bun run src/index.ts` | `node dist/node/index.js` or `npx tsx src/index.ts` |
-| Package manager | `bun add/install` | `npm install` or `npx` |
-| TypeScript execution | Native (no compile step needed) | Requires `tsx` or pre-compilation |
-| File I/O | `Bun.file()`, `Bun.write()` | `fs.readFile/readFileSync`, `fs.writeFile/writeFileSync` |
-| Environment | `Bun.env` or `process.env` | `process.env` only |
-| Test runner | `bun test` | `npx vitest` or `npx jest` |
-| Watch mode | `--watch` flag | Requires `tsx watch` or `ts-node-dev` |
-| Node_modules | Bun's binary lockfile `bun.lock` | `package-lock.json` |
+| Runtime | `bun run src/index.ts` | `node --import tsx src/index.ts` |
+| Package manager | `bun install` | `npm install` |
+| TypeScript | Native execution | Requires tsx or compilation |
+| Build | `bunx tsc` | `npx tsc --project tsconfig.node.json` |
+| Testing | `bun test` | `vitest run` |
+| Binary | `bun build --compile` | `pkg` or Node.js SEA |
 
 ## Code Patterns for Compatibility
 
 ### File I/O
-
-This project uses `node:fs/promises` (readFile, writeFile) which works in both Bun and Node.js:
-
 ```typescript
 // Compatible with both Bun and Node.js
 import { readFile, writeFile } from 'node:fs/promises';
@@ -50,26 +86,7 @@ await writeFile('output.txt', content);
 ```
 
 ### Environment Variables
-
 ```typescript
 // Works in both Bun and Node.js
 const apiKey = process.env['API_KEY'];
 ```
-
-### Package.json Fields
-
-The `package.json` includes both `type: "module"` for Bun (ESM) and a separate
-`tsconfig.node.json` for Node.js CommonJS output.
-
-## When to Use Which
-
-- **Development**: Always use Bun for the best experience (`bun run dev`)
-- **CI/CD**: Use Bun for speed, or Node.js with `tsx` for compatibility
-- **Production deployment**: Both work; choose based on your infrastructure
-- **Library usage**: Export TypeScript source; consumers can use with either runtime
-
-## Known Limitations with Node.js
-
-1. **TypeScript execution**: Node.js cannot natively run `.ts` files. Use `tsx` (`npx tsx`) as a runtime or compile first.
-2. **Performance**: Bun generally starts faster and has better module resolution for this project.
-3. **Test runner**: `bun test` is the primary test runner. For Node.js, use `vitest` (already included in devDependencies).

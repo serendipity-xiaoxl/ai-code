@@ -1,9 +1,10 @@
-#!/usr/bin/env bun
 // ============================================================
 // ai-code - Main CLI Entry Point
 //
 // Entry point for the terminal AI coding assistant.
 // Starts interactive session loop.
+//
+// Runtime: Bun (primary) and Node.js (via tsx or build).
 // ============================================================
 
 import { parseArgs, showHelp, getCliConfigOverrides } from './commands';
@@ -15,7 +16,7 @@ import { buildSystemPrompt } from '../agent/system';
 import { buildProjectContext } from '../agent/context';
 import { createSessionStore } from '../storage/session';
 import { getLogger, setLogger, Logger } from '../utils/logger';
-import { createInput, sleep } from '../utils/os-compat';
+import { createInput, sleep, getRuntime } from '../utils/os-compat';
 
 const logger = getLogger();
 
@@ -87,9 +88,11 @@ async function main(): Promise<void> {
   let agent = buildAgent(agentConfig, systemPrompt);
 
   // Render startup banner
+  const runtime = getRuntime();
   console.log('');
   console.log(renderer.header('ai-code v0.1.0'));
   console.log(renderer.metadata([
+    ['Runtime', runtime === 'bun' ? 'Bun' : 'Node.js'],
     ['Model', config.llm.model],
     ['Project', projectDir],
     ['Context', projectContext.files.length + ' files, ' + projectContext.totalLines + ' lines'],

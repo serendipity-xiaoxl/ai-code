@@ -4,8 +4,11 @@
 // A Model Context Protocol (MCP) server for intelligent
 // code review powered by LangChain and LLMs.
 //
+// Runtime: Bun (primary) and Node.js (via tsx or build).
+//
 // Usage:
-//   bun run src/index.ts                    # Start MCP server
+//   bun run src/index.ts                    # Start MCP server (Bun)
+//   node --import tsx src/index.ts          # Start MCP server (Node.js)
 //   bun run src/index.ts --help             # Show help
 //   bun run src/index.ts --standalone       # Run standalone review
 //
@@ -47,7 +50,8 @@ function showHelp(): void {
 MCP Code Review Tool - Intelligent code review via MCP protocol
 
   USAGE:
-    bun run src/index.ts                      Start MCP server (stdio)
+    bun run src/index.ts                      Start MCP server (Bun)
+    node --import tsx src/index.ts            Start MCP server (Node.js)
     bun run src/index.ts --standalone         Run standalone review
     bun run src/index.ts --help               Show this help
     bun run src/index.ts --version            Show version
@@ -77,10 +81,17 @@ MCP Code Review Tool - Intelligent code review via MCP protocol
     review://rules         - Static analysis rules
 
   NODE.JS COMPATIBILITY:
-    This project targets Bun as its primary runtime. For Node.js:
-    - Build with: npx tsc --project tsconfig.node.json
-    - Run with: node dist/node/index.js
-    - Use the TypeScript source directly with tsx: npx tsx src/index.ts
+    Run TS directly:  npx tsx src/index.ts
+    Build JS:         npm run build:node-compat
+    Run JS:           node dist/node/index.js
+    Binary build:     npm run build:binary    (standalone executables)
+
+  BINARY BUILD:
+    bun run build:binary              Build for current runtime
+    bun run build:binary:bun          Build with Bun only
+    bun run build:binary:node         Build with Node.js/pkg only
+    bun run build:binary:all          Build both
+    Output: ./bin/
 
   REPORT FORMATS:
     Supported output formats: terminal, markdown, json, html
@@ -137,7 +148,10 @@ async function main(): Promise<void> {
       const server = new Server();
       const files = await server['readFiles'](process.cwd());
       const review = await server['runStaticAnalysisOnly'](files, 'terminal');
-      console.log(review.content[0].text);
+      const content = (review as { content: Array<{ text: string }> }).content;
+      if (content && content.length > 0) {
+        console.log(content[0].text);
+      }
     }
 
     process.exit(0);

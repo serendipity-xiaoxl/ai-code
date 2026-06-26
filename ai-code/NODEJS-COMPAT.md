@@ -1,79 +1,81 @@
-# Node.js Compatibility Guide
-
-This project is built with **Bun** as the primary runtime. This document describes the differences and how to run with **Node.js**.
+# Node.js Compatibility & Binary Build Guide
 
 ## Quick Start
 
+### Bun (primary)
 ```bash
-# Install dependencies
-npm install
-
-# Build for Node.js (CommonJS output)
-npx tsc --project tsconfig.node.json
-
-# Run with Node.js
-node dist/node/cli/index.js
-
-# Or use tsx for direct TypeScript execution
-npx tsx src/cli/index.ts
+bun install
+bun run dev          # Development with watch mode
+bun run start        # Start the assistant
 ```
 
-## Build Configuration
+### Node.js
+```bash
+npm install
+npm run dev:node     # Development with watch mode
+npm run start:node   # Start the assistant
+```
 
-- `tsconfig.node.json` uses CommonJS module format for Node.js compatibility
-- Output goes to `dist/node/` directory
-- Run `bun run build:node` or `npx tsc --project tsconfig.node.json`
+### Run TypeScript directly with Node.js
+```bash
+npx tsx src/cli/index.ts
+npx tsx src/cli/index.ts --help
+```
+
+## Build
+
+```bash
+# TypeScript compilation
+npm run build           # Bun build (ESM)
+npm run build:node      # Node.js build (CommonJS)
+
+# Run compiled output
+node dist/node/cli/index.js
+```
+
+## Binary Build (Standalone Executables)
+
+Build standalone native binaries that don't require Bun or Node.js installed.
+
+### Prerequisites
+```bash
+npm install             # Install dependencies (esbuild, etc.)
+npm install pkg         # Optional: for Node.js binary builds
+```
+
+### Build commands
+```bash
+npm run build:binary           # Build both Bun and Node.js binaries
+npm run build:binary:bun       # Build with Bun only
+npm run build:binary:node      # Build with Node.js/pkg only
+npm run build:binary:all       # Build both (same as default)
+```
+
+### Output
+Binaries are placed in `./bin/` directory:
+- `aic-bun-{platform}` — Bun standalone binary
+- `aic-node-{platform}` — Node.js standalone binary
+
+### Binary build process
+1. **esbuild** bundles all TypeScript into a single JS file
+2. **Bun**: `bun build --compile` creates a self-contained binary
+3. **Node.js**: `pkg` packages the bundle with a Node.js runtime
+   - Falls back to Node.js SEA (Single Executable Application) if pkg unavailable
 
 ## Key Differences
 
 | Feature | Bun | Node.js |
 |---------|-----|---------|
-| Runtime | `bun run src/cli/index.ts` | `node dist/node/cli/index.js` or `npx tsx src/cli/index.ts` |
+| Runtime | `bun run src/cli/index.ts` | `node --import tsx src/cli/index.ts` |
 | Package manager | `bun install` | `npm install` |
 | TypeScript | Native execution | Requires tsx or compilation |
-| Shell execution | `Bun.spawn()` | `child_process.exec()` |
-| File I/O | `Bun.file()` | `fs/promises` |
-| SQLite | `bun:sqlite` (native) | `better-sqlite3` |
-| Testing | `bun test` | `vitest` or `jest` |
+| Build | `bunx tsc` | `npx tsc --project tsconfig.node.json` |
+| Testing | `bun test` | `vitest run` |
+| Binary | `bun build --compile` | `pkg` or Node.js SEA |
 
 ## OS Compatibility Layer
 
 All runtime-specific code is abstracted through `src/utils/os-compat.ts`:
-
 - File operations use `node:fs/promises` (works in both Bun and Node.js)
 - Shell execution checks `isBun` and uses the appropriate implementation
-- Environment variables use `process.env` (works in both)
-
-## Shell Execution
-
-The `shell/tools.ts` module has dual implementations:
-
-```typescript
-if (isBun) {
-  // Bun: use Bun.spawn
-  const proc = Bun.spawn(['/bin/bash', '-c', command], { ... });
-} else {
-  // Node.js: use child_process.exec
-  const { exec } = await import('node:child_process');
-  // ...
-}
-```
-
-## Testing
-
-```bash
-# Bun (primary)
-bun test
-
-# Node.js
-npx vitest run
-# or
-npx jest
-```
-
-## Limitations with Node.js
-
-1. **No native TypeScript execution**: Use `tsx` or compile first
-2. **Performance**: Bun starts faster and has better module resolution
-3. **SQLite**: In Node.js, install `better-sqlite3` for SQLite support
-4. **Test runner**: Primary test suite uses `bun test`; for Node.js, vitest is available
+- `getRuntime()` detects the current runtime at startup

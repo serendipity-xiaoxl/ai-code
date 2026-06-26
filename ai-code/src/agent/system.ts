@@ -74,6 +74,7 @@ You have access to the following tools:
 - bash_interactive: Run long-lived commands (install, dev servers)
 - grep: Search file contents for patterns
 - glob: Find files by glob pattern
+- diff: Compare file content with proposed changes (preview before write/edit)
 
 Use tools when they would be helpful. For simple questions, you can answer directly.`);
 

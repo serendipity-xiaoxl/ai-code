@@ -119,6 +119,10 @@ export async function createDefaultRegistry(
   registry.register(createGrepTool());
   registry.register(createGlobTool());
 
+  // Diff tool
+  const { createDiffTool } = await import('./file/diff');
+  registry.register(createDiffTool(), { requiresApproval: true });
+
   logger.info('Tool registry created with', registry.count, 'tools');
 
   return registry;

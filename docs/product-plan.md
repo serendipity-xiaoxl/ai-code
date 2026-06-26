@@ -1,8 +1,91 @@
 # 项目企划书：AI-Coding 终端助手
 
-> 版本：v1.0  
+> 版本：v1.1  
 > 日期：2026-06-26  
-> 状态：企划初稿
+> 状态：Phase 1 完成 / Phase 2 进行中
+
+---
+
+## 0. 当前实现状态
+
+### Phase 1 MVP — ✅ 已完成
+
+| 功能 | 状态 | 实现文件 |
+|------|------|----------|
+| 多轮对话 | ✅ | `src/agent/index.ts` — CodingAgent (ChatOpenAI + tool-calling loop) |
+| 项目读取 | ✅ | `src/tools/search/tools.ts` (grep/glob), `src/agent/context.ts` (项目上下文构建) |
+| 文件写入 | ✅ | `src/tools/file/tools.ts` — createWriteTool |
+| 文件编辑 | ✅ | `src/tools/file/tools.ts` — createEditTool (行级替换) |
+| Shell 执行 | ✅ | `src/tools/shell/tools.ts` — bash + bash_interactive (Bun/Node.js 双实现) |
+| OpenAI 兼容 API | ✅ | `src/llm/factory.ts` — ChatOpenAI，支持任意兼容 API |
+| 上下文管理 | ✅ | `src/agent/context.ts` + `src/agent/system.ts` — 项目上下文 + System Prompt |
+| 对话历史 | ✅ | `src/storage/session.ts` — JSON 文件持久化 + 会话恢复 |
+| 工具调用系统 | ✅ | `src/tools/registry.ts` + `src/tools/guard.ts` — 工具注册表 + 权限守卫 |
+
+### Phase 2 增强 — 🚧 部分完成
+
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| Config 系统 | ✅ | `src/config/` — 用户级/项目级/环境变量/CLI 四层配置 |
+| 确认/审批机制 | ✅ | `src/tools/guard.ts` + `--yes` 标志 |
+| 自动上下文压缩 | ✅ | `/compact [N]` 命令 (context-commands.ts) |
+| 记忆/指令系统 | ✅ | 会话持久化 + 上下文状态命令 (`/status`, `/context`) |
+| Node.js 兼容 | ✅ | `tsconfig.node.json` + tsx + os-compat 抽象层 |
+| 二进制打包 | ✅ | `scripts/build-binary.ts` — Bun + Node.js SEA 双平台 |
+| 输入框 UI | ✅ | `src/renderer/input.ts` — ASCII 终端输入渲染 |
+| 文件引用 | ✅ | `src/cli/file-refs.ts` — @file 语法 + 内容注入 |
+| 上下文命令 | ✅ | `src/cli/context-commands.ts` — /status /context /compact |
+| 文件差异对比 | ❌ | Phase 2 待实现 |
+| 批量文件编辑 | ❌ | Phase 2 待实现 |
+| Git 集成 | ❌ | Phase 2 待实现 |
+
+### Phase 3 扩展 — ⏳ 未开始
+
+| 功能 | 状态 |
+|------|------|
+| 子代理系统 | ⏳ |
+| MCP 集成 | ⏳ (mcp-code-review-tool 已独立实现) |
+| 插件系统 | ⏳ |
+| LSP 诊断 | ⏳ |
+| Checkpointing | ⏳ |
+| Headless/CI 模式 | ⏳ |
+
+### 当前架构总览
+
+```
+ai-code/src/
+├── cli/
+│   ├── index.ts              # 主入口 (双运行时)
+│   ├── commands.ts           # CLI 参数解析 (commander)
+│   ├── context-commands.ts   # /status /context /compact /clear
+│   └── file-refs.ts          # @file 引用解析与注入
+├── agent/
+│   ├── index.ts              # CodingAgent (ChatOpenAI + tool-calling loop)
+│   ├── system.ts             # System Prompt 构建
+│   └── context.ts            # 项目上下文构建
+├── tools/
+│   ├── registry.ts           # 工具注册表
+│   ├── guard.ts              # 权限守卫
+│   ├── file/tools.ts         # read / write / edit
+│   ├── shell/tools.ts        # bash / bash_interactive
+│   └── search/tools.ts       # grep / glob
+├── llm/
+│   └── factory.ts            # ChatOpenAI 工厂
+├── renderer/
+│   ├── markdown.ts           # Markdown 终端渲染 (ASCII-only)
+│   ├── spinner.ts            # 加载动画
+│   └── input.ts              # 输入框 UI 渲染
+├── config/
+│   ├── loader.ts             # 配置加载 (四层)
+│   └── schema.ts             # Zod Schema
+├── storage/
+│   └── session.ts            # 会话持久化
+├── utils/
+│   ├── logger.ts             # 结构化日志
+│   └── os-compat.ts          # Bun/Node.js 兼容层
+└── scripts/
+    └── build-binary.ts       # 双平台二进制打包
+```
 
 ---
 
@@ -461,69 +544,108 @@ ai-code/
 ### 6.1 时间线总览
 
 ```
-Phase 1 (MVP)          Phase 2 (Core+)          Phase 3 (Extension)
-   W1-W4                  W5-W8                    W9-W12+
-   4 周                   4 周                     4+ 周
+Phase 1 (MVP)          Phase 2 (Core+)              Phase 3 (Extension)
+   已完成                 正在进行 (剩余 3 功能)         规划中
 ```
 
-### 6.2 Phase 1：MVP 核心功能 (W1-W4)
+### 6.2 Phase 1：MVP 核心功能 — ✅ 已完成
 
 **目标**: 实现可用的终端 AI 编码助手
 
-| 周次 | 里程碑 | 交付物 |
-|------|--------|--------|
-| **W1** | 项目脚手架与基础设施 | - Bun/TypeScript 项目初始化<br>- CLI 入口与命令解析<br>- 配置管理模块<br>- 日志系统<br>- 基础测试框架 |
-| **W2** | LLM 集成与基础对话 | - OpenAI 兼容 API 客户端集成 (LangChain)<br>- 多轮对话能力<br>- 基础终端渲染（无 unicode）<br>- Spinner 加载动画 |
-| **W3** | 核心工具链 | - 文件读取工具 (read, glob, grep)<br>- 文件写入工具 (write)<br>- 文件编辑工具 (edit)<br>- Shell 执行工具 (bash, timeout)<br>- 工具注册表与权限守卫 |
-| **W4** | 上下文管理与集成测试 | - 项目上下文构建<br>- System prompt 优化<br>- 会话持久化<br>- 端到端集成测试<br>- **MVP 发布** |
+| 里程碑 | 状态 | 交付物 |
+|--------|------|--------|
+| 项目脚手架与基础设施 | ✅ | - Bun/TypeScript 项目初始化<br>- CLI 入口与命令解析 (commander)<br>- 配置管理模块 (5 层优先级)<br>- 日志系统 (结构化日志)<br>- 测试框架 (Bun:test + Vitest) |
+| LLM 集成与基础对话 | ✅ | - OpenAI 兼容 API 客户端 (ChatOpenAI)<br>- 多轮对话能力 (CodingAgent)<br>- 终端渲染 (ASCII-only + ANSI)<br>- Spinner 加载动画 |
+| 核心工具链 | ✅ | - 文件读取/写入/编辑工具<br>- Shell 执行工具 (Bun + Node.js)<br>- grep/glob 搜索工具<br>- 工具注册表 + 权限守卫 (代码已实现，待集成) |
+| 上下文管理与集成测试 | ✅ | - 项目上下文构建 (5 层策略)<br>- System Prompt 优化<br>- 会话持久化 (JSON)<br>- 18 个测试文件，模块级覆盖 |
 
-**Phase 1 交付标准**:
+**Phase 1 交付标准** (全部达成):
 - 能在终端中启动并对话
 - 能读取和编辑项目文件
 - 能执行 Shell 命令
 - 支持任意 OpenAI 兼容 API
-- 无 unicode 的正常显示
+- ASCII-only 终端显示
 
-### 6.3 Phase 2：核心体验增强 (W5-W8)
+### 6.3 Phase 2：核心体验增强 — 🚧 进行中
 
 **目标**: 提升产品质量和用户体验
 
-| 周次 | 里程碑 | 交付物 |
-|------|--------|--------|
-| **W5** | 编辑能力增强 | - 文件差异对比 (diff)<br>- 批量文件编辑 (multiedit)<br>- 文件修改预览与确认 |
-| **W6** | Git 集成 | - Git diff/commit/log 工具<br>- Git branch 管理<br>- 自动 commit 建议 |
-| **W7** | 智能上下文 | - 指令文件系统 (类似 CLAUDE.md)<br>- 自动上下文压缩<br>- Token 使用监控 |
-| **W8** | 配置与稳定 | - 多级配置系统<br>- 错误处理增强<br>- 性能优化<br>- 测试覆盖率提升 (80%+)<br>- **Phase 2 发布** |
+#### 已完成
 
-### 6.4 Phase 3：扩展能力 (W9-W12+)
+| 里程碑 | 交付物 |
+|--------|--------|
+| 配置系统 | 多级配置 (默认 > 用户 > 项目 > 环境变量 > CLI) |
+| 确认/审批机制 | PermissionGuard (代码已完成，待集成到 agent 流程) |
+| 自动上下文压缩 | `/compact [N]` 命令 (截断模式，待升级为 LLM 摘要) |
+| 输入框 UI | 高亮输入提示、@文件引用着色 |
+| 文件引用 | @file.ts 语法解析与内容注入 |
+| Node.js 双运行时 | tsconfig.node.json + tsx + os-compat 抽象层 |
+| 二进制打包 | Bun --compile + pkg + Node.js SEA |
+| 上下文命令 | /status /context /help /clear /exit |
+
+#### 剩余待实现功能
+
+**P0 — 文件差异对比 (diff)**
+
+| 项目 | 内容 |
+|------|------|
+| 工具接口 | `diff(filePath, fileB?, workingTree?, gitStaged?, contextLines?)` |
+| 输出格式 | Unified diff 格式，ANSI 着色 (+ 绿色, - 红色, @@ 青色) |
+| UI 展示 | 复用已有 `renderer.diffLine()` 函数 |
+| 工作量 | 小 (2-3 天) |
+
+**P1 — 批量文件编辑 (batch_edit)**
+
+| 项目 | 内容 |
+|------|------|
+| 工具接口 | `batch_edit(edits[], glob, preview?, regex?, multiline?, caseSensitive?)` |
+| 安全要求 | 预览模式 + PermissionGuard 确认 |
+| 工作量 | 中 (4-5 天) |
+
+**P1 — Git 集成**
+
+| 项目 | 内容 |
+|------|------|
+| 工具接口 | 6 个子工具: git_status / git_diff / git_commit / git_log / git_branch / git_add |
+| 安全要求 | git_commit 和 git_branch(checkout) 需权限确认 |
+| 工作量 | 大 (5-7 天) |
+
+详细规格见 [`docs/phase2-features.md`](phase2-features.md)。
+
+### 6.4 Phase 3：扩展能力 (规划中)
 
 **目标**: 高级功能和企业级特性
 
-| 周次 | 里程碑 | 交付物 |
-|------|--------|--------|
-| **W9** | 子代理系统 | - 子代理并行执行<br>- 子代理类型管理<br>- 结果汇总机制 |
-| **W10** | MCP 集成 | - MCP 客户端<br>- 外部工具接入<br>- MCP 服务器管理 |
-| **W11** | 插件系统 | - 插件定义规范<br>- 插件加载机制<br>- 插件 API |
-| **W12** | 企业级特性 | - Headless/CI 模式<br>- 多模型切换<br>- LSP 诊断集成<br>- Checkpointing<br>- **Phase 3 发布** |
+| 功能 | 优先级 | 说明 |
+|------|--------|------|
+| 流式输出 | P1 | 实时流式显示 AI 回复，而非等待完整响应 |
+| 子代理系统 | P2 | 并行子任务执行 (参考 Claude Code subagent) |
+| MCP 集成 | P2 | Model Context Protocol 扩展 |
+| 插件系统 | P2 | 可扩展的第三方插件 |
+| LSP 诊断 | P2 | 代码诊断和实时错误提示 |
+| Token 计数/上下文管理 | P1 | 精确 token 监控和上下文窗口管理 |
+| Checkpointing | P2 | 项目状态快照和回滚 |
+| Headless/CI 模式 | P3 | 非交互式自动执行 |
+| 多模型切换 | P1 | 运行时切换 LLM 提供商 (/model 命令) |
 
 ### 6.5 发布版本映射
 
 | 版本 | 对应阶段 | 主要特性 |
 |------|----------|----------|
-| v0.1.0 | Phase 1 MVP | 基础对话、文件读写、Shell 执行 |
-| v0.2.0 | Phase 2 Core+ | 差异对比、Git 集成、智能上下文 |
-| v0.3.0 | Phase 3 Extension | 子代理、MCP、插件、CI 模式 |
+| v0.1.0 | Phase 1 MVP — 已发布 | 基础对话、文件读写、Shell 执行 |
+| v0.2.0 | Phase 2 Core+ — 开发中 | 差异对比、Git 集成、批量编辑 |
+| v0.3.0 | Phase 3 Extension | 流式输出、子代理、MCP、CI 模式 |
 | v1.0.0 | 稳定版 | 以上全部 + 生产级稳定性 |
 
 ### 6.6 风险评估
 
 | 风险 | 概率 | 影响 | 缓解措施 |
 |------|------|------|----------|
-| LangChain API 变更 | 中 | 高 | 封装抽象层，减少直接依赖 |
-| Bun 兼容性问题 | 低 | 中 | 同步维护 Node.js 兼容版本 |
-| Token 消耗过高 | 中 | 中 | 上下文压缩、Token 预算控制 |
-| LLM 工具调用不稳定 | 中 | 高 | 重试机制、回退策略、结构化输出 |
-| 终端兼容性 | 低 | 中 | 跨平台测试、降级方案 |
+| LangChain API 变更 | 中 | 高 | 封装抽象层，减少直接依赖 (当前 agent 为自定义循环，不使用 AgentExecutor) |
+| Bun 兼容性问题 | 低 | 中 | 同步维护 Node.js 兼容版本 (os-compat 抽象层) |
+| Token 消耗过高 | 中 | 中 | 上下文压缩、Token 预算控制 (待实现精确计数) |
+| LLM 工具调用不稳定 | 中 | 高 | 重试机制、回退策略、结构化输出 (当前有 maxIterations 保护) |
+| 终端兼容性 | 低 | 中 | 跨平台测试 (Windows/macOS/Linux)、ASCII-only 降级 |
 
 ---
 

@@ -294,9 +294,15 @@ export function createRenderer(config?: Partial<RendererConfig>) {
     const items: Array<[string, string]> = [
       ['/help', 'Show this help'],
       ['/clear', 'Clear conversation history'],
+      ['/status', 'Show session status and token usage'],
+      ['/context', 'Show current project context'],
+      ['/compact', 'Compact conversation history'],
       ['/exit', 'Exit ai-code'],
       ['exit', 'Exit ai-code'],
       ['quit', 'Exit ai-code'],
+      ['@file.ts', 'Reference a file (inject content)'],
+      ['@file.ts:42', 'Reference file at line number'],
+      ['Ctrl+L', 'Clear screen'],
       ['Ctrl+C', 'Interrupt current response'],
     ];
 

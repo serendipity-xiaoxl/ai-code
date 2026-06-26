@@ -4,9 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a monorepo with two projects:
-- **ai-code** — A terminal AI coding assistant powered by LangChain (the main product)
-- **mcp-code-review-tool** — An MCP-based intelligent code review tool
+This is the **ai-code** project — a terminal AI coding assistant powered by LangChain.
 
 ## Team
 
@@ -48,17 +46,7 @@ bun run lint             # ESLint
 bun run format           # Prettier
 ```
 
-### mcp-code-review-tool
-
-```bash
-cd mcp-code-review-tool
-
-bun run dev              # Start MCP server (watch mode)
-bun run review           # Run standalone review
-bun run test             # Run tests
-```
-
-## Architecture (ai-code)
+## Architecture
 
 ### Agent Loop (`src/agent/index.ts`)
 

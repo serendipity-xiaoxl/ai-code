@@ -13,6 +13,9 @@ bin/
 # Claude local config
 .claude/
 
+# Session storage
+ai-code/.ai-code/
+
 # IDE
 .vscode/
 .idea/

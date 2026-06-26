@@ -1,0 +1,15 @@
+# OS files
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Claude local config
+.claude/
+
+# IDE
+.vscode/
+.idea/

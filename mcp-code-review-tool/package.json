@@ -1,0 +1,56 @@
+{
+  "name": "mcp-code-review-tool",
+  "version": "0.1.0",
+  "description": "MCP-based intelligent code review tool powered by LangChain",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "mcp-review": "dist/index.js"
+  },
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "build": "bun run build:ts && bun run build:node-compat",
+    "build:ts": "bunx tsc",
+    "build:node-compat": "bunx tsc --project tsconfig.node.json",
+    "start": "bun run dist/index.js",
+    "review": "bun run src/index.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
+    "lint": "bunx eslint src/",
+    "format": "bunx prettier --write src/"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.2.0",
+    "@langchain/anthropic": "^1.5.0",
+    "@langchain/openai": "^1.5.0",
+    "@langchain/community": "^1.1.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "langchain": "^1.5.0",
+    "simple-git": "^3.36.0",
+    "picocolors": "^1.1.0",
+    "zod": "^3.24.0",
+    "marked": "^18.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "bun-types": "^1.2.0",
+    "@types/node": "^22.0.0",
+    "vitest": "^3.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.4.0"
+  },
+  "engines": {
+    "bun": ">=1.2.0",
+    "node": ">=22.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "code-review",
+    "langchain",
+    "ai",
+    "cli"
+  ],
+  "license": "MIT"
+}

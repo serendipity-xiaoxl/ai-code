@@ -12,6 +12,8 @@ export default defineConfig({
       'test/renderer/input.test.ts',
       'test/cli/file-refs.test.ts',
       'test/cli/context-commands.test.ts',
+      'test/tools/git-tools.test.ts',
+      'test/tools/batch-edit.test.ts',
     ],
     exclude: ['node_modules'],
   },

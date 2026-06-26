@@ -128,6 +128,9 @@ async function main(): Promise<void> {
   // Set up readline with backspace-safe prompt
   const rl = createInput(
     async (line: string) => {
+      // Reset exit timer on any input
+      if (exitTimer) { clearTimeout(exitTimer); exitTimer = null; }
+
       const trimmed = line.trim();
 
       // Print bottom separator to close the input frame
@@ -195,6 +198,7 @@ async function main(): Promise<void> {
       }
 
       // Show spinner while AI responds
+      appState = 'processing';
       spinner.start('Thinking...');
 
       try {
@@ -222,6 +226,7 @@ async function main(): Promise<void> {
       }
 
       // Reprint top separator to start new input frame
+      appState = 'idle';
       console.log('');
       console.log(inputFrame.top);
       rl.setPrompt(inputRenderer.prompt());
@@ -234,15 +239,52 @@ async function main(): Promise<void> {
     inputRenderer.prompt(), // backspace-safe prompt via readline
   );
 
-  // Handle Ctrl+C gracefully
+  // Track app state for Ctrl+C behavior
+  let appState: 'idle' | 'processing' = 'idle';
+  let exitTimer: ReturnType<typeof setTimeout> | null = null;
+  const EXIT_WINDOW_MS = 3000; // 3s window for double Ctrl+C to exit
+
+  // Handle Ctrl+C with three behaviors:
+  // 1. Idle + first Ctrl+C  → readline clears input, warn about exit
+  // 2. Idle + second Ctrl+C within 3s → exit process
+  // 3. Processing + Esc/Ctrl+C → interrupt current task
   process.on('SIGINT', () => {
-    spinner.stop();
+    if (appState === 'processing') {
+      // Interrupt current AI task
+      spinner.stop();
+      console.log('');
+      console.log(renderer.muted('Interrupted.'));
+      console.log('');
+      console.log(inputFrame.top);
+      rl.setPrompt(inputRenderer.prompt());
+      appState = 'idle';
+      return;
+    }
+
+    // Idle state: first press warns, second within window exits
+    if (exitTimer) {
+      // Second Ctrl+C within window → exit
+      clearTimeout(exitTimer);
+      console.log('');
+      console.log(renderer.muted('Goodbye!'));
+      sessionStore.save(session);
+      process.exit(0);
+    }
+
+    // First Ctrl+C → clear input, warn
     console.log('');
-    console.log(renderer.muted('Interrupted. Type "exit" to quit.'));
+    console.log(renderer.muted('Press Ctrl+C again to exit.'));
     console.log('');
     console.log(inputFrame.top);
     rl.setPrompt(inputRenderer.prompt());
+
+    // Set exit window timer
+    exitTimer = setTimeout(() => {
+      exitTimer = null;
+    }, EXIT_WINDOW_MS);
   });
+
+  // Reset exit timer when user starts typing (handled by readline 'line' event already)
 
   // Keep alive
   while (running) {

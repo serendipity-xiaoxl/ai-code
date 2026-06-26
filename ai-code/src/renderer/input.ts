@@ -146,6 +146,30 @@ export function createInputRenderer() {
     return line + C.bold + padded + C.reset + dashes;
   }
 
+  /**
+   * A horizontal separator line for visually framing the input area.
+   *
+   * Renders a full-width dim gray line of dashes. Use before and after
+   * the input to create a visual boundary between chat output and input.
+   *
+   * @returns The separator line string.
+   */
+  function separator(): string {
+    const width = process.stdout.columns ?? 80;
+    return C.dim + C.gray + '-'.repeat(Math.min(width, 120)) + C.reset;
+  }
+
+  /**
+   * Render the complete input area frame: top separator, prompt,
+   * and return just the bottom separator for use after the input.
+   *
+   * @returns An object with { top, bottom } separator strings.
+   */
+  function inputFrame(): { top: string; bottom: string } {
+    const s = separator();
+    return { top: s, bottom: s };
+  }
+
   return {
     prompt,
     highlightInput,
@@ -153,6 +177,8 @@ export function createInputRenderer() {
     refFile,
     commandBadge,
     sectionHeader,
+    separator,
+    inputFrame,
   };
 }
 

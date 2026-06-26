@@ -118,17 +118,26 @@ async function main(): Promise<void> {
   // Main interaction loop
   let running = true;
 
-  // Set up readline
-  createInput(
+  // Separator lines to frame input area
+  const inputFrame = inputRenderer.inputFrame();
+
+  // Print initial top separator and start with prompt
+  console.log('');
+  console.log(inputFrame.top);
+
+  // Set up readline with backspace-safe prompt
+  const rl = createInput(
     async (line: string) => {
       const trimmed = line.trim();
+
+      // Print bottom separator to close the input frame
+      console.log(inputFrame.bottom);
 
       // Handle slash commands via handleCommand() BEFORE any other processing
       const cmdResult = handleCommand(trimmed, session, renderer, inputRenderer, projectDir);
 
       if (cmdResult.handled) {
         if (cmdResult.output) {
-          console.log('');
           console.log(cmdResult.output);
           console.log('');
         }
@@ -141,6 +150,7 @@ async function main(): Promise<void> {
           } else if (cmdResult.action.type === 'exit') {
             running = false;
             sessionStore.save(session);
+            console.log(renderer.muted('Goodbye!'));
             process.exit(0);
           } else if (cmdResult.action.type === 'compact') {
             session.messages = cmdResult.action.messages;
@@ -148,18 +158,16 @@ async function main(): Promise<void> {
           }
         }
 
-        process.stdout.write(inputRenderer.prompt());
+        // Reprint top separator for next input
+        console.log('');
+        console.log(inputFrame.top);
+        rl.setPrompt(inputRenderer.prompt());
         return;
       }
 
-      // Echo highlighted input (non-empty only)
+      // Echo highlighted input (non-empty only) inside the frame
       if (trimmed.length > 0) {
-        console.log('');
         console.log(inputRenderer.inputBox(inputRenderer.highlightInput(trimmed)));
-      } else {
-        // Empty input - just re-prompt
-        process.stdout.write(inputRenderer.prompt());
-        return;
       }
 
       // Parse @file references
@@ -204,10 +212,6 @@ async function main(): Promise<void> {
         // Render the response
         console.log('');
         console.log(renderer.aiResponse(aiMessage));
-        console.log('');
-
-        // Show prompt for next input
-        process.stdout.write(inputRenderer.prompt());
 
         // Agent is reusable - no need to rebuild
       } catch (error) {
@@ -215,32 +219,29 @@ async function main(): Promise<void> {
         const errMsg = error instanceof Error ? error.message : String(error);
         console.log(renderer.error(errMsg));
         logger.error('Agent invoke failed', error);
-        process.stdout.write(inputRenderer.prompt());
       }
+
+      // Reprint top separator to start new input frame
+      console.log('');
+      console.log(inputFrame.top);
+      rl.setPrompt(inputRenderer.prompt());
     },
     () => {
       running = false;
       sessionStore.save(session);
       process.exit(0);
     },
+    inputRenderer.prompt(), // backspace-safe prompt via readline
   );
-
-  // Show initial prompt
-  process.stdout.write(inputRenderer.prompt());
 
   // Handle Ctrl+C gracefully
   process.on('SIGINT', () => {
     spinner.stop();
     console.log('');
     console.log(renderer.muted('Interrupted. Type "exit" to quit.'));
-  });
-
-  // Handle Ctrl+L (clear screen)
-  process.stdin.on('keypress', (_str, key) => {
-    if (key && key.ctrl && key.name === 'l') {
-      process.stdout.write('\x1b[2J\x1b[H');
-      process.stdout.write(inputRenderer.prompt());
-    }
+    console.log('');
+    console.log(inputFrame.top);
+    rl.setPrompt(inputRenderer.prompt());
   });
 
   // Keep alive

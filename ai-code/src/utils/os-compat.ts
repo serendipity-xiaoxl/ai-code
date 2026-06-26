@@ -128,16 +128,23 @@ export async function isReadable(filePath: string): Promise<boolean> {
 /**
  * Readline interface for terminal input.
  * Uses Node.js readline (available in both Bun and Node).
+ *
+ * @param onLine  - Called when the user submits a line of input.
+ * @param onClose - Optional callback when the readline stream closes.
+ * @param promptText - Optional prompt string displayed before input.
+ *                     Uses readline's built-in prompt which is
+ *                     backspace-safe (cannot be erased by the user).
  */
 export function createInput(
   onLine: (line: string) => void,
   onClose?: () => void,
-): { write: (text: string) => void; close: () => void } {
+  promptText?: string,
+): { write: (text: string) => void; close: () => void; setPrompt: (text: string) => void } {
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
     terminal: true,
-    prompt: '',
+    prompt: promptText ?? '',
   });
 
   rl.on('line', onLine);
@@ -145,9 +152,16 @@ export function createInput(
     rl.on('close', onClose);
   }
 
+  // Display the initial prompt
+  rl.prompt();
+
   return {
     write: (text: string) => process.stdout.write(text),
     close: () => rl.close(),
+    setPrompt: (text: string) => {
+      rl.setPrompt(text);
+      rl.prompt();
+    },
   };
 }
 
